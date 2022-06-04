@@ -2,6 +2,8 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+//This is the main paper I referenced when creating this file:
+//https://people.cs.clemson.edu/~dhouse/courses/405/notes/splines.pdf
 package frc.robot;
 
 import org.ejml.simple.SimpleMatrix;
@@ -16,48 +18,90 @@ import java.net.URISyntaxException;
 /** Add your docs here. */
 public class ParametricFunctionSolver {
 
+    private final double[] endChunk = {-1,-1};
+    private final double[] endPath = {-2,-2};
+
+    /*
     private double[][] allCoordinates = 
-  {{5,1, 0}, {2,-9, 1}, {-3,-3, 2}, {-10,10, 3}};
+    {{5,1, 0}, {2,-9, 1}, {-3,-3, 2}, {-10,10, 3}, endChunk,
+    {-10,10, 4}, {0,0, 5}, {4,-7, 6}, {9,4, 7}, endChunk,
+    endPath};
+    */
+    private double[][] allCoordinates = 
+    {{0,0, 0}, {1,2, 1}, endChunk, 
+    {1,2, 2}, {1,-4, 3}, {3,-5, 4}, endChunk,
+    endPath};
 
+    private double[][] chunk = new double[4][3];
+    private double[] coordinate = new double[3];
+    private int chunkLength = 0;
 
-  private SimpleMatrix A = new SimpleMatrix(4, 4);
-  private SimpleMatrix B = new SimpleMatrix(4, 1);
-  private SimpleMatrix C = new SimpleMatrix(4,2);
+    private SimpleMatrix A;
+    private SimpleMatrix B;
+    private SimpleMatrix C;
     
 
 
   public ParametricFunctionSolver() {  
-
-        for(int i = 0; i < allCoordinates.length; i++){
-
-            for(int j = 0; j < allCoordinates.length; j++){
-                A.set(i, j, Math.pow(allCoordinates[i][2], j));
-            }
-               
-        }
-    
         
-        for(int i = 0; i < 2; i++){
+        SmartDashboard.putString("Trip1", "Before Loop");
+
+        for(int outerLoop = 0; coordinate != endPath; outerLoop++){
+
+            SmartDashboard.putNumber("outerLoop", outerLoop);
             
-            for(int j = 0; j < allCoordinates.length; j++){
-                B.set(j, 0, allCoordinates[j][i]);
+            coordinate = allCoordinates[outerLoop];
+
+            if(coordinate != endChunk){
+                SmartDashboard.putString("Trip2", "Filling Chunks");
+                chunk[chunkLength] = coordinate;
+                chunkLength++;
+                continue;
             }
-           SimpleMatrix invA = A.invert();
 
-           C.insertIntoThis(0, i, invA.mult(B)); 
-        }
+            A = new SimpleMatrix(chunkLength, chunkLength);
+            B = new SimpleMatrix(chunkLength, 1);
+            C = new SimpleMatrix(chunkLength,2);
 
-
-        SmartDashboard.putNumber("AX", C.get(0, 0));
-        SmartDashboard.putNumber("BX", C.get(1, 0));
-        SmartDashboard.putNumber("CX", C.get(2, 0));
-        SmartDashboard.putNumber("DX", C.get(3, 0));
+            for(int i = 0; i < chunkLength; i++){
+                SmartDashboard.putString("Trip3", "Inner Loop 1");
+                for(int j = 0; j < chunkLength; j++){
+                    A.set(i, j, Math.pow(chunk[i][2], j));
+                }
+                
+            }
         
-        SmartDashboard.putNumber("AY", C.get(0, 1));
-        SmartDashboard.putNumber("BY", C.get(1, 1));
-        SmartDashboard.putNumber("CY", C.get(2, 1));
-        SmartDashboard.putNumber("DY", C.get(3, 1));
+            
+            for(int i = 0; i < 2; i++){
+                SmartDashboard.putString("Trip4", "Inner Loop 2");
+                for(int j = 0; j < chunkLength; j++){
+                    B.set(j, 0, chunk[j][i]);
+                }
+                SimpleMatrix invA = A.invert();
 
+                C.insertIntoThis(0, i, invA.mult(B)); 
+            }
+
+            try{
+                SmartDashboard.putNumber("AX", C.get(0, 0));
+                SmartDashboard.putNumber("BX", C.get(1, 0));
+                SmartDashboard.putNumber("CX", C.get(2, 0));
+                //SmartDashboard.putNumber("DX", C.get(3, 0));
+                
+                SmartDashboard.putNumber("AY", C.get(0, 1));
+                SmartDashboard.putNumber("BY", C.get(1, 1));
+                SmartDashboard.putNumber("CY", C.get(2, 1));
+                //SmartDashboard.putNumber("DY", C.get(3, 1));
+            }
+            catch(Exception exception){
+
+            }
+
+            
+            
+            chunkLength = 0;
+        }
+        SmartDashboard.putString("Trip", "After Loop");
         //Opening Desmos
 
         
@@ -66,7 +110,7 @@ public class ParametricFunctionSolver {
             URI desmosURI = new URI("https://dashguy999.github.io/DesmosTesting/");
 
             
-            String queryString = "value= 3t^3 /+ 2t^2";
+            String queryString = "value= 3t^3+2t^2";
 
             //SmartDashboard.putString("desmosURI.getQuery before", desmosURI.getQuery());
 
