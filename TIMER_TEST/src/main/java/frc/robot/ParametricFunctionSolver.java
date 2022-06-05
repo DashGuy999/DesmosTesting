@@ -23,16 +23,16 @@ public class ParametricFunctionSolver {
     private final double[] endChunk = {-1,-1};
     private final double[] endPath = {-2,-2};
 
-    
+
     private double[][] allCoordinates = 
-    {{5,1, 0}, {2,-9, 1}, {-3,-3, 2}, {-10,10, 3}, endChunk,
-    {-10,10, 3}, {-15,0, 4}, {-8,-3, 5}, {-8,-8, 6}, endChunk,
+    {{0,4}, {2,-3}, {-5,1}, {6,3}, endChunk,
+    {6,3}, {5,0}, {0,-3}, {2,-5}, endChunk,
     endPath};
-    
 
     private double[][] chunk = new double[4][3];
     private double[] coordinate = new double[3];
     private int chunkLength = 0;
+    private int uImprint = 0;
 
     private SimpleMatrix A;
     private SimpleMatrix B;
@@ -43,17 +43,19 @@ public class ParametricFunctionSolver {
 
   public ParametricFunctionSolver() {  
         
-        SmartDashboard.putString("Trip1", "Before Loop");
 
         for(int outerLoop = 0; coordinate != endPath; outerLoop++){
 
-            SmartDashboard.putNumber("outerLoop", outerLoop);
+            
             
             coordinate = allCoordinates[outerLoop];
 
             if(coordinate != endChunk){
                 SmartDashboard.putString("Trip2", "Filling Chunks");
-                chunk[chunkLength] = coordinate;
+                chunk[chunkLength][0] = coordinate[0];
+                chunk[chunkLength][1] = coordinate[1];
+                chunk[chunkLength][2] = uImprint;
+                uImprint++;
                 chunkLength++;
                 continue;
             }
@@ -100,6 +102,8 @@ public class ParametricFunctionSolver {
             }
             queryString = queryString + "br&";
             
+            uImprint--;
+
             chunkLength = 0;
         }
         SmartDashboard.putString("Trip", "After Loop");
